@@ -6,7 +6,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 
 export async function POST(req: any) {
-    const { content, recordId } = await req.json();
+    const { content, recordId, aiAgentType } = await req.json();
     const user = await currentUser();
     try {
         // Insert record
@@ -14,7 +14,8 @@ export async function POST(req: any) {
             recordId: recordId,
             content: content,
             userEmail: user?.primaryEmailAddress?.emailAddress,
-            createdAt: (new Date()).toString()
+            createdAt: (new Date()).toString(),
+            aiAgentType: aiAgentType
         })
         return NextResponse.json(result)
     } catch (e) {

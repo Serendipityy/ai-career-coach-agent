@@ -16,9 +16,12 @@ export async function POST(req: any) {
     let runStatus;
     while (true) {
         runStatus = await getRuns(runId);
-        if (runStatus?.data[0]?.status === 'Completed')
+        if (runStatus?.data[0]?.status === 'Completed') {
             break;
-
+        }
+        if (runStatus?.data[0]?.status === 'Canceled') {
+            break;
+        }
         await new Promise(resolve => setTimeout(resolve, 500));
     }
 

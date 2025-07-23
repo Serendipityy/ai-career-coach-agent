@@ -21,9 +21,9 @@ function ResumeUploadDialog({ openResumeUpload, setOpenResumeDialog }: any) {
     const [loading, setLoading] = useState(false)
     const router = useRouter();
 
-    useEffect(() => {
-        setFile([])
-    }, [open])
+    // useEffect(() => {
+    //     setFile([])
+    // }, [open])
 
     const onFileChange = (event: any) => {
         const file = event.target.files?.[0]

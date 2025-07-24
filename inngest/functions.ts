@@ -95,8 +95,52 @@ export const AiResumeAnalyzerAgent = createAgent({
     }),
 })
 
+export const AIRoadmapGeneratorAgent = createAgent({
+    name: 'AIRoadmapGeneratorAgent',
+    description: 'Generate Details Tree Like Flow Roadmap',
+    system: `Generate a React flow tree-structured learning roadmap for user input position/ skills the following format:
+    vertical tree structure with meaningful x/y positions to form a flow
+    - Structure should be similar to roadmap.sh layout
+    - Steps should be ordered from fundamentals to advanced
+    - Include branching for different specializations (if applicable)
+    - Use unique IDs for all nodes and edges
+    - Make it more specious node position,
+    - Response n JSON format
+    {
+    roadmapTitle:",
+    description:<3-5 Lines>,
+    duration:",
+    initialNodes: [
+    {
+    id: '1',
+    type: 'turbo', // Type turbo only everytime
+    position: { x: 0, y: 0 },
+    data: {
+    title: 'Step Title',
+    description: 'Short two-line explanation of what the step covers.',
+    link: 'Helpful link for learning this step',
+    },
+    },
+    ...
+    ],
+    initialEdges: [
+    {
+    id: 'e1-2',
+    source: '1',
+    target: '2',
+    },
+    ...
+    ];
+    }
+    User Input: Frontend Developer`,
+    model: gemini({
+        model: 'gemini-2.0-flash',
+        apiKey: process.env.GEMINI_API_KEY
+    })
+})
+
 export const AiCareerAgent = inngest.createFunction(
-    { id: "AiCareerAgent" },
+    { id: 'AiCareerAgent' },
     { event: 'AiCareerAgent' },
     async ({ event, step }) => {
         const { userInput } = await event?.data;
@@ -152,6 +196,37 @@ export const AiResumeAgent = inngest.createFunction(
             console.log(result);
             return parseJson;
         })
-
     }
-) 
+)
+
+export const AIRoadmapAgent = inngest.createFunction(
+    { id: 'AiRoadmapAgent' },
+    {
+        event: 'AiRoadmapAgent'
+    },
+    async ({ event, step }) => {
+        const { roadmapId, userInput, userEmail } = await event.data;
+
+        const roadmapResult = await AIRoadmapGeneratorAgent.run("UserInput:" + userInput);
+        // return roadmapResult
+
+        //@ts-ignore
+        const rawContent = roadmapResult.output[0].content
+        const rawContentJson = rawContent.replace('```json', '').replace('```', '');
+        const parseJson = JSON.parse(rawContentJson);
+
+        // Save to DB
+        const saveToDb = await step.run("saveToDb", async () => {
+            const result = await db.insert(HistoryTable).values({
+                recordId: roadmapId,
+                content: parseJson,
+                aiAgentType: '/ai-tools/ai-roadmap-agent',
+                createdAt: (new Date()).toString(),
+                userEmail: userEmail,
+                metaData: userInput
+            });
+            console.log(result);
+            return parseJson;
+        })
+    }
+)
